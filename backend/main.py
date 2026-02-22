@@ -805,6 +805,24 @@ async def ws_feed(websocket: WebSocket):
             ws_connections.remove(websocket)
 
 
+# --- Debug endpoint ---
+
+@app.get("/debug/paths")
+async def debug_paths():
+    frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+    alt_path = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
+    return {
+        "cwd": os.getcwd(),
+        "file_dir": os.path.dirname(os.path.abspath(__file__)),
+        "frontend_path": os.path.abspath(frontend_path),
+        "frontend_exists": os.path.exists(frontend_path),
+        "frontend_contents": os.listdir(frontend_path) if os.path.exists(frontend_path) else "NOT FOUND",
+        "alt_path": os.path.abspath(alt_path),
+        "alt_exists": os.path.exists(alt_path),
+        "parent_contents": os.listdir(os.path.join(os.path.dirname(__file__), "..")),
+    }
+
+
 # --- Serve built frontend ---
 
 frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
@@ -812,6 +830,7 @@ if not os.path.exists(frontend_dist):
     frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
 
 if os.path.exists(frontend_dist):
+    print(f"[STARTUP] Serving frontend from {os.path.abspath(frontend_dist)}")
     assets_dir = os.path.join(frontend_dist, "assets")
     if os.path.exists(assets_dir):
         app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
@@ -822,3 +841,5 @@ if os.path.exists(frontend_dist):
         if os.path.isfile(file_path):
             return FileResponse(file_path)
         return FileResponse(os.path.join(frontend_dist, "index.html"))
+else:
+    print(f"[WARNING] Frontend not found at {os.path.abspath(frontend_dist)}")
