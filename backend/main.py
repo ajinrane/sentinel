@@ -161,8 +161,8 @@ class SitRepRequest(BaseModel):
 
 # --- Endpoints ---
 
-@app.get("/")
-async def root():
+@app.get("/api/health")
+async def health():
     return {"status": "ok", "service": "SENTINEL"}
 
 
