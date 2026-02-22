@@ -55,7 +55,7 @@ export default function App() {
     if (seenEventIds.current.has(dedupKey)) return
     seenEventIds.current.add(dedupKey)
     event._uid = `${Date.now()}-${++uidCounter.current}`
-    setEvents((prev) => [...prev, event].slice(-300))
+    setEvents((prev) => [...prev.slice(-49), event])
   }, [])
 
   const fetchData = useCallback(async () => {
@@ -486,7 +486,7 @@ export default function App() {
             style={{ height: `${feedSplit}%` }}
             className="min-h-0 panel-section"
           >
-            <AgentFeed events={events} language={language} />
+            <AgentFeed events={events} language={language} onClear={() => setEvents([])} />
           </section>
 
           {/* Drag handle */}

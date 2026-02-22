@@ -122,7 +122,7 @@ function EventCard({ event, simpleView }) {
   )
 }
 
-export default function AgentFeed({ events, language = 'en' }) {
+export default function AgentFeed({ events, language = 'en', onClear }) {
   const scrollRef = useRef(null)
   const { settings } = useAccessibility()
   const { speak, enabled: ttsEnabled } = useTTS()
@@ -186,6 +186,24 @@ export default function AgentFeed({ events, language = 'en' }) {
             />
           ))}
           <span style={{ color: theme.colors.textTertiary, fontSize: '12px', marginLeft: '4px' }}>{events.length}</span>
+          {onClear && events.length > 0 && (
+            <button
+              onClick={onClear}
+              aria-label="Clear event feed"
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8,
+                padding: '4px 10px',
+                fontSize: 11,
+                color: '#86868B',
+                cursor: 'pointer',
+                marginLeft: 4,
+              }}
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
