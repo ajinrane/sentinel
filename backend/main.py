@@ -10,8 +10,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
 # Load .env before importing agents (they need ANTHROPIC_API_KEY)
@@ -805,41 +804,29 @@ async def ws_feed(websocket: WebSocket):
             ws_connections.remove(websocket)
 
 
-# --- Debug endpoint ---
-
-@app.get("/debug/paths")
-async def debug_paths():
-    frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
-    alt_path = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
-    return {
-        "cwd": os.getcwd(),
-        "file_dir": os.path.dirname(os.path.abspath(__file__)),
-        "frontend_path": os.path.abspath(frontend_path),
-        "frontend_exists": os.path.exists(frontend_path),
-        "frontend_contents": os.listdir(frontend_path) if os.path.exists(frontend_path) else "NOT FOUND",
-        "alt_path": os.path.abspath(alt_path),
-        "alt_exists": os.path.exists(alt_path),
-        "parent_contents": os.listdir(os.path.join(os.path.dirname(__file__), "..")),
-    }
-
-
 # --- Serve built frontend ---
 
-frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
-if not os.path.exists(frontend_dist):
-    frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
+_frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+if not os.path.exists(_frontend_dist):
+    _frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
+_frontend_dist = os.path.abspath(_frontend_dist)
 
-if os.path.exists(frontend_dist):
-    print(f"[STARTUP] Serving frontend from {os.path.abspath(frontend_dist)}")
-    assets_dir = os.path.join(frontend_dist, "assets")
-    if os.path.exists(assets_dir):
-        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+if os.path.exists(_frontend_dist):
+    print(f"[STARTUP] Serving frontend from {_frontend_dist}")
+
+    @app.get("/assets/{file_path:path}")
+    async def serve_assets(file_path: str):
+        full = os.path.join(_frontend_dist, "assets", file_path)
+        if os.path.isfile(full):
+            return FileResponse(full)
+        return HTMLResponse("Not found", status_code=404)
 
     @app.get("/{path:path}")
     async def serve_frontend(path: str):
-        file_path = os.path.join(frontend_dist, path)
-        if os.path.isfile(file_path):
-            return FileResponse(file_path)
-        return FileResponse(os.path.join(frontend_dist, "index.html"))
+        if path and not path.startswith("assets"):
+            full = os.path.join(_frontend_dist, path)
+            if os.path.isfile(full):
+                return FileResponse(full)
+        return FileResponse(os.path.join(_frontend_dist, "index.html"))
 else:
-    print(f"[WARNING] Frontend not found at {os.path.abspath(frontend_dist)}")
+    print(f"[WARNING] Frontend not found at {_frontend_dist}")
