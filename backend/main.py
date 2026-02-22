@@ -808,11 +808,14 @@ async def ws_feed(websocket: WebSocket):
 # --- Serve built frontend ---
 
 frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
-if os.path.exists(frontend_dist):
-    # Serve static assets (js, css, images)
-    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+if not os.path.exists(frontend_dist):
+    frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
 
-    # Catch-all: serve index.html for any non-API route (SPA routing)
+if os.path.exists(frontend_dist):
+    assets_dir = os.path.join(frontend_dist, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
     @app.get("/{path:path}")
     async def serve_frontend(path: str):
         file_path = os.path.join(frontend_dist, path)
