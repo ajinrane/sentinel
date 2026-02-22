@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ArrowLeft, Play, Activity } from 'lucide-react'
 import { theme, alpha } from '../design'
+import { API_BASE } from '../config'
 
 // Pentagon layout coordinates (SVG viewBox 700x500)
 const NODES = [
@@ -215,12 +216,12 @@ export default function AgentOrchestration({ events, onBack }) {
     setCurrentStep(-1)
 
     // Also fire the real backend pipeline so events flow to the main dashboard
-    fetch('http://localhost:8111/demo', {
+    fetch(`${API_BASE}/demo`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     }).catch(() => {
       // Fallback — backend might not have /demo
-      fetch('http://localhost:8111/intake', {
+      fetch(`${API_BASE}/intake`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

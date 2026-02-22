@@ -3,12 +3,15 @@
 import asyncio
 import json
 import os
+import subprocess
 from contextlib import asynccontextmanager
 from datetime import datetime
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 # Load .env before importing agents (they need ANTHROPIC_API_KEY)
@@ -103,6 +106,16 @@ def generate_startup_events():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Auto-seed database if it doesn't exist
+    db_path = os.path.join(os.path.dirname(__file__) or ".", "sentinel.db")
+    if not os.path.exists(db_path):
+        print("[STARTUP] Seeding database...")
+        subprocess.run(
+            ["python", "seed.py"],
+            cwd=os.path.dirname(__file__) or ".",
+            check=True,
+        )
+        print("[STARTUP] Database seeded.")
     init_db()
     generate_startup_events()
     yield
@@ -790,3 +803,19 @@ async def ws_feed(websocket: WebSocket):
     except Exception:
         if websocket in ws_connections:
             ws_connections.remove(websocket)
+
+
+# --- Serve built frontend ---
+
+frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+if os.path.exists(frontend_dist):
+    # Serve static assets (js, css, images)
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+
+    # Catch-all: serve index.html for any non-API route (SPA routing)
+    @app.get("/{path:path}")
+    async def serve_frontend(path: str):
+        file_path = os.path.join(frontend_dist, path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(frontend_dist, "index.html"))

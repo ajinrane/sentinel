@@ -22,9 +22,9 @@ import VoiceCommands from './components/accessibility/VoiceCommands'
 import { useAccessibility } from './contexts/AccessibilityContext'
 import { t, LANG_OPTIONS } from './i18n'
 import { theme, alpha } from './design'
+import { API_BASE, WS_URL } from './config'
 
-const API = 'http://localhost:8111'
-const WS_URL = 'ws://localhost:8111/ws/feed'
+const API = API_BASE
 
 function getThreatLevel(clusters) {
   if (!clusters.length) return { label: 'CLEAR', style: theme.severity.clear }

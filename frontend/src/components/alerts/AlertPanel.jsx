@@ -14,8 +14,9 @@ import { useAccessibility } from '../../contexts/AccessibilityContext'
 import { useTTS } from '../accessibility/TextToSpeech'
 import { simplifyAlertCard, simplifyAnomalyScore } from '../accessibility/SimpleViewTransforms'
 import { theme, alpha } from '../../design'
+import { API_BASE } from '../../config'
 
-const API = 'http://localhost:8111'
+const API = API_BASE
 
 function SeverityBadge({ anomalyScore, simpleView }) {
   const isCritical = anomalyScore > 100
